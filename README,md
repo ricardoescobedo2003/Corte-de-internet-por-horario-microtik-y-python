@@ -1,0 +1,19 @@
+# Ajuste de Ancho de Banda para MikroTik
+
+Este script permite ajustar automáticamente el ancho de banda de una queue en un dispositivo MikroTik en horarios específicos. Utiliza SSH para conectarse al dispositivo MikroTik y ejecutar los comandos necesarios.
+
+## Requisitos
+
+- Python 3
+- Bibliotecas Python:
+  - `paramiko`
+  - `schedule`
+  - `tkinter`
+
+## Instalación
+
+### Clonar el repositorio
+
+```bash
+git clone https://github.com/ricardoescobedo2003/Corte-de-internet-por-horario-microtik-y-python.git
+python3 ./corte.py
