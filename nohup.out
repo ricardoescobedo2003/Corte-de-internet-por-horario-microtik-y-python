@@ -1,0 +1,16 @@
+Scheduler iniciado. Ejecutando cada minuto...
+Traceback (most recent call last):
+  File "/home/escobedo/Documents/GitHub/Corte-de-internet-por-horario-microtik-y-python/./corte.py", line 58, in <module>
+    time.sleep(1)
+KeyboardInterrupt
+Scheduler iniciado. Ejecutando cada minuto...
+Traceback (most recent call last):
+  File "/home/escobedo/Documents/GitHub/Corte-de-internet-por-horario-microtik-y-python/./corte.py", line 58, in <module>
+    time.sleep(1)
+KeyboardInterrupt
+Scheduler iniciado. Ejecutando cada día a las 10:30PM y 5:50AM...
+Error: 
+Traceback (most recent call last):
+  File "/home/escobedo/Documents/GitHub/Corte-de-internet-por-horario-microtik-y-python/./corte.py", line 61, in <module>
+    time.sleep(1)
+KeyboardInterrupt
