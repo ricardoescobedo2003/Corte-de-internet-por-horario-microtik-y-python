@@ -1,90 +1,92 @@
-import tkinter as tk
-from tkinter import ttk
 import paramiko
 import schedule
 import time
+import tkinter as tk
+from tkinter import messagebox
 
-def adjust_bandwidth():
-    # Función para ajustar el ancho de banda
-    hostname = hostname_entry.get()
+def adjust_bandwidth(queue_name, new_max_limit, hostname, username, password):
     port = 22  # Puerto SSH, generalmente es 22
-    username = username_entry.get()
-    password = password_entry.get()
-    queue_name = queue_entry.get()
-    new_max_limit = limit_entry.get()
-
-    # Comando para ajustar el ancho de banda
     command = f'/queue simple set [find name="{queue_name}"] max-limit={new_max_limit}'
 
-    # Crear una instancia del cliente SSH
     client = paramiko.SSHClient()
-
-    # Agregar automáticamente la clave del servidor si no está en la lista de known hosts
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
     try:
-        # Conectarse al dispositivo
         client.connect(hostname, port, username, password)
-        
-        # Ejecutar el comando para ajustar el ancho de banda
         stdin, stdout, stderr = client.exec_command(command)
-        
-        # Leer y mostrar la salida del comando, si es necesario
         output = stdout.read().decode()
         errors = stderr.read().decode()
         
         if output:
-            result_label.config(text=f"Output: {output}")
+            print(f"Output: {output}")
         if errors:
-            result_label.config(text=f"Errors: {errors}")
+            print(f"Errors: {errors}")
 
     except Exception as e:
-        result_label.config(text=f"Error: {e}")
+        print(f"Error: {e}")
 
     finally:
-        # Cerrar la conexión
         client.close()
 
-def schedule_task():
-    # Función para programar la tarea según el horario especificado
-    schedule_time = time_entry.get()
-    schedule.every().day.at(schedule_time).do(adjust_bandwidth)
-    result_label.config(text=f"Tarea programada para las {schedule_time}")
+def schedule_bandwidth_change(queue_name, first_limit, start_time, second_limit, end_time, hostname, username, password):
+    schedule.every().day.at(start_time).do(adjust_bandwidth, queue_name, first_limit, hostname, username, password)
+    schedule.every().day.at(end_time).do(adjust_bandwidth, queue_name, second_limit, hostname, username, password)
+    messagebox.showinfo("Scheduler", f"Scheduler iniciado. Ejecutando ajustes de ancho de banda a las {start_time} y {end_time}...")
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
 
-# Crear la ventana principal
+def start_scheduler():
+    hostname = entry_hostname.get()
+    username = entry_username.get()
+    password = entry_password.get()
+    queue_name = entry_queue_name.get()
+    start_time = entry_start_time.get()
+    first_limit = entry_first_limit.get()
+    end_time = entry_end_time.get()
+    second_limit = entry_second_limit.get()
+
+    if not all([hostname, username, password, queue_name, start_time, first_limit, end_time, second_limit]):
+        messagebox.showerror("Error", "Todos los campos son obligatorios")
+        return
+
+    root.after(100, schedule_bandwidth_change, queue_name, first_limit, start_time, second_limit, end_time, hostname, username, password)
+
 root = tk.Tk()
-root.title("Ajuste de Ancho de Banda")
+root.title("Ajuste de Ancho de Banda para MikroTik")
 
-# Crear y posicionar los elementos en la ventana
-tk.Label(root, text="Hostname:").grid(row=0, column=0)
-hostname_entry = tk.Entry(root)
-hostname_entry.grid(row=0, column=1)
+tk.Label(root, text="Hostname/IP:").grid(row=0, column=0, padx=5, pady=5)
+entry_hostname = tk.Entry(root)
+entry_hostname.grid(row=0, column=1, padx=5, pady=5)
 
-tk.Label(root, text="Username:").grid(row=1, column=0)
-username_entry = tk.Entry(root)
-username_entry.grid(row=1, column=1)
+tk.Label(root, text="Usuario:").grid(row=1, column=0, padx=5, pady=5)
+entry_username = tk.Entry(root)
+entry_username.grid(row=1, column=1, padx=5, pady=5)
 
-tk.Label(root, text="Password:").grid(row=2, column=0)
-password_entry = tk.Entry(root, show="*")
-password_entry.grid(row=2, column=1)
+tk.Label(root, text="Contraseña:").grid(row=2, column=0, padx=5, pady=5)
+entry_password = tk.Entry(root, show="*")
+entry_password.grid(row=2, column=1, padx=5, pady=5)
 
-tk.Label(root, text="Nombre de Queue:").grid(row=3, column=0)
-queue_entry = tk.Entry(root)
-queue_entry.grid(row=3, column=1)
+tk.Label(root, text="Nombre de la Queue:").grid(row=3, column=0, padx=5, pady=5)
+entry_queue_name = tk.Entry(root)
+entry_queue_name.grid(row=3, column=1, padx=5, pady=5)
 
-tk.Label(root, text="Límite de Ancho de Banda:").grid(row=4, column=0)
-limit_entry = tk.Entry(root)
-limit_entry.grid(row=4, column=1)
+tk.Label(root, text="Hora de Inicio (HH:MM):").grid(row=4, column=0, padx=5, pady=5)
+entry_start_time = tk.Entry(root)
+entry_start_time.grid(row=4, column=1, padx=5, pady=5)
 
-tk.Label(root, text="Horario (HH:MM):").grid(row=5, column=0)
-time_entry = tk.Entry(root)
-time_entry.grid(row=5, column=1)
+tk.Label(root, text="Primer Límite de Ancho de Banda (ej. 1k/1k):").grid(row=5, column=0, padx=5, pady=5)
+entry_first_limit = tk.Entry(root)
+entry_first_limit.grid(row=5, column=1, padx=5, pady=5)
 
-schedule_button = tk.Button(root, text="Programar Tarea", command=schedule_task)
-schedule_button.grid(row=6, column=0, columnspan=2, pady=10)
+tk.Label(root, text="Hora de Fin (HH:MM):").grid(row=6, column=0, padx=5, pady=5)
+entry_end_time = tk.Entry(root)
+entry_end_time.grid(row=6, column=1, padx=5, pady=5)
 
-result_label = tk.Label(root, text="")
-result_label.grid(row=7, column=0, columnspan=2)
+tk.Label(root, text="Segundo Límite de Ancho de Banda (ej. 100M/15M):").grid(row=7, column=0, padx=5, pady=5)
+entry_second_limit = tk.Entry(root)
+entry_second_limit.grid(row=7, column=1, padx=5, pady=5)
 
-# Iniciar el bucle de la aplicación
+tk.Button(root, text="Iniciar Scheduler", command=start_scheduler).grid(row=8, column=0, columnspan=2, pady=10)
+
 root.mainloop()
