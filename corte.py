@@ -2,20 +2,9 @@ import paramiko
 import schedule
 import time
 
-def adjust_bandwidth_1():
-    # Función para ajustar el ancho de banda a 1k/1k
-    adjust_bandwidth(cola1, speed)
-
-def adjust_bandwidth_2():
-    # Función para ajustar el ancho de banda a 100M/15M
-    adjust_bandwidth(cola1, speed2)
-
-def adjust_bandwidth(queue_name, new_max_limit):
+def adjust_bandwidth(queue_name, new_max_limit, hostname, username, password):
     # Función para ajustar el ancho de banda
-    hostname = input("Ingresa la IP del Microtik")  # Dirección IP de tu MikroTik
     port = 22  # Puerto SSH, generalmente es 22
-    username = input("Ingresa el usuario de microtik")  # Usuario de tu MikroTik
-    password = input("Ingresa la password de microtik")  # Contraseña de tu MikroTik
 
     # Comando para ajustar el ancho de banda
     command = f'/queue simple set [find name="{queue_name}"] max-limit={new_max_limit}'
@@ -49,20 +38,29 @@ def adjust_bandwidth(queue_name, new_max_limit):
         # Cerrar la conexión
         client.close()
 
-timeInicio = input("Ingresa en formato de 24:00Hrs, la hora de inicio ejemplo 19:49 para las 6:49PM")
-timeEnd = input("Ingresa en formato de 24:00Hrs, la hora de finalizacion ejemplo 19:51 para las 6:51 PM")
-cola1 = input("Ingresa el nombre del cliente, tal y como lo tienes en micoritk")
-speed = input("Ingresa la velocidad de subida que tendra la primera hora ejemplo 1k/1k")
-speed2 = input("Ingresa la velocidad de subida que tendra la segunda hora ejemplo 100M/15M")
+def main():
+    # Solicitar datos al usuario
+    hostname = input("Ingrese el hostname o IP del MikroTik: ")
+    username = input("Ingrese el nombre de usuario: ")
+    password = input("Ingrese la contraseña: ")
+    queue_name = input("Ingrese el nombre de la queue: ")
 
-# Configurar el horario para ejecutar la función cada día a las 10:30PM y 5:50AM
-schedule.every().day.at(timeInicio).do(adjust_bandwidth_1)
-schedule.every().day.at(timeEnd).do(adjust_bandwidth_2)
+    # Configurar horarios y límites de ancho de banda
+    start_time = input("Ingrese la hora de inicio (HH:MM) para el primer ajuste de ancho de banda: ")
+    first_limit = input("Ingrese el límite de ancho de banda para el primer ajuste (ej. 1k/1k): ")
+    end_time = input("Ingrese la hora de fin (HH:MM) para el segundo ajuste de ancho de banda: ")
+    second_limit = input("Ingrese el límite de ancho de banda para el segundo ajuste (ej. 100M/15M): ")
 
+    # Programar tareas con schedule
+    schedule.every().day.at(start_time).do(adjust_bandwidth, queue_name, first_limit, hostname, username, password)
+    schedule.every().day.at(end_time).do(adjust_bandwidth, queue_name, second_limit, hostname, username, password)
 
-print("Scheduler iniciado. Ejecutando cada día a las 10:30PM y 5:50AM...")
+    print(f"Scheduler iniciado. Ejecutando ajustes de ancho de banda a las {start_time} y {end_time}...")
 
-# Bucle infinito para mantener el script en ejecución y verificar el horario
-while True:
-    schedule.run_pending()
-    time.sleep(1)
+    # Bucle infinito para mantener el script en ejecución y verificar el horario
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+
+if __name__ == "__main__":
+    main()
